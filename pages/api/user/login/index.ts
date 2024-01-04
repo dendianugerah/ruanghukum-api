@@ -3,7 +3,7 @@ import db, { user } from "@/src/config/db";
 import compareHash from "@/src/helper/compareHash";
 import { sql } from "drizzle-orm";
 import { Response } from "@/src/helper/apiResponse";
-
+import generateJwt from "@/src/helper/generateJwt";
 interface LoginApiRequest extends NextApiRequest {
   body: {
     email: string;
@@ -23,26 +23,29 @@ export default async function handler(
         return res.status(400).json({ message: "Please fill all fields" });
       }
 
-      const query = await db
+      const [userRecord] = await db
         .execute(
-          sql`SELECT email, password FROM ${user} WHERE email = ${email}`
+          sql`SELECT id, email, password FROM ${user} WHERE email = ${email}`
         )
         .catch((error) => {
           throw error;
         });
 
-      if (query.length === 0) {
+      if (!userRecord) {
         return res.status(400).json({ message: "User not found" });
       }
 
       const isPasswordMatch = await compareHash(
         password,
-        query[0]?.password as string
+        userRecord.password as string
       );
 
       if (!isPasswordMatch) {
         return res.status(400).json({ message: "Password not match" });
       }
+
+      const token = generateJwt(userRecord.id as string, email);
+      res.setHeader("Set-Cookie", `token=${token}; path=/; HttpOnly`);
 
       return Response(res, 200, "Login success", {
         type: "user - login",
