@@ -6,6 +6,7 @@ import {
   uuid,
   numeric,
   boolean,
+  date,
 } from "drizzle-orm/pg-core";
 
 export const genderEnum = pgEnum("gender", ["male", "female"]);
@@ -42,7 +43,7 @@ export const user = pgTable("user", {
   gender: genderEnum("gender"),
   jobTitle: varchar("job_title", { length: 255 }),
   idCardNumber: varchar("id_card_number", { length: 100 }),
-  birthDate: time("birth_date", { withTimezone: true }),
+  birthDate: date("birth_date"),
   ...timestampColumns(),
 });
 
