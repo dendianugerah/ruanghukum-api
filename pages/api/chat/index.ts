@@ -28,7 +28,7 @@ export default async function handler(
               parts: `You are a helpful Lawyer. I want you to act as a professional lawyer, but you have to give an answer based on Indonesian law. I want you to help me solve my problem. My problem is ${message}
         
                 ===========
-                Return the answer as if you are a professional lawyer. Make sure you give an answer based on Indonesian law. And make sure you provide an answer that can solve my problem. Don't use words that can confuse me. If you can provide an simple answer, please do it.
+                Return the answer as if you are a professional lawyer AND sometimes just use a straight answer like you are a real person talking, no need long explanation (with point or something). Make sure you give an answer based on Indonesian law. Don't use words that can confuse me. If you can provide an simple answer, please do it.
                 ===========
 
                 Return the answer in Bahasa Indonesia.
@@ -47,20 +47,12 @@ export default async function handler(
       },
     });
 
-    const result = await chat.sendMessageStream(message);
-    let text = "";
-    for await (const chunk of result.stream) {
-      const chunkText = chunk.text();
-      console.log(chunkText);
-      text += chunkText;
-    }
-
-    chatHistory = await chat.getHistory();
+    const result = await chat.sendMessage(message);
 
     return Response(res, 200, "Success", {
       type: "chat",
       payload: {
-        message: text,
+        message: result?.response?.candidates?.[0].content.parts[0].text,
       },
     });
   } else {
