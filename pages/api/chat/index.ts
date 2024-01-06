@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-
+import { Response } from "@/src/helper/apiResponse";
 interface ChatApiRequest extends NextApiRequest {
   body: {
     message: string;
@@ -57,7 +57,12 @@ export default async function handler(
 
     chatHistory = await chat.getHistory();
 
-    res.status(200).json({ message: text });
+    return Response(res, 200, "Success", {
+      type: "chat",
+      payload: {
+        message: text,
+      },
+    });
   } else {
     res.status(405).end();
   }
