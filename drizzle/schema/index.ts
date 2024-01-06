@@ -80,3 +80,12 @@ export const chat_room_message = pgTable("chat_room_message", {
   userId: uuid("user_id").references(() => user.id),
   message: varchar("message", { length: 255 }),
 });
+
+export const blog = pgTable("blog", {
+  id: uuid("id").primaryKey(),
+  title: varchar("title", { length: 255 }),
+  content: varchar("content", { length: 255 }),
+  image: varchar("image", { length: 255 }),
+  flag: varchar("flag", { length: 255 }),
+  ...timestampColumns(),
+});
