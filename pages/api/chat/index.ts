@@ -47,6 +47,8 @@ export default async function handler(
       },
     });
 
+    chatHistory = await chat.getHistory();
+
     const result = await chat.sendMessage(message);
 
     return Response(res, 200, "Success", {
