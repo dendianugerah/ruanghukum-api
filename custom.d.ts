@@ -2,7 +2,7 @@ import { NextApiRequest } from "next";
 
 declare module "next" {
   export interface NextApiRequest {
-    userId?: string;
+    userId?: uuid;
     email?: string;
   }
 }
