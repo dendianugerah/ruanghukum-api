@@ -1,12 +1,5 @@
-import jwt from "jsonwebtoken";
 import { NextApiRequest, NextApiResponse } from "next";
-
-const verifyToken = (token: string): { userId: string; email: string } => {
-  return jwt.verify(token, process.env.JWT_SECRET as string) as {
-    userId: string;
-    email: string;
-  };
-};
+import verifyToken from "@/src/helper/verifyToken";
 
 export default function withAuth(handler: any) {
   return async (req: NextApiRequest, res: NextApiResponse) => {
