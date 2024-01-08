@@ -7,6 +7,7 @@ import {
   numeric,
   boolean,
   date,
+  text,
 } from "drizzle-orm/pg-core";
 
 export const genderEnum = pgEnum("gender", ["male", "female"]);
@@ -84,7 +85,7 @@ export const chat_room_message = pgTable("chat_room_message", {
 export const blog = pgTable("blog", {
   id: uuid("id").primaryKey(),
   title: varchar("title", { length: 255 }),
-  content: varchar("content", { length: 255 }),
+  content: text("content"),
   image: varchar("image", { length: 255 }),
   flag: varchar("flag", { length: 255 }),
   ...timestampColumns(),
