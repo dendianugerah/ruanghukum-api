@@ -1,30 +1,40 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import fs from "fs";
+import { sql } from "drizzle-orm";
+import { Response } from "@/src/helper/apiResponse";
+import { bucket } from "@/src/config/gcs";
+import { v4 as uuid } from "uuid";
 import PDFDocument from "pdfkit";
-import withAuth from "@/middleware";
-
-// still figuring out the template for each case (category): and then after that, i will refactor all this code
+import verifyToken from "@/src/helper/verifyToken";
+import db from "@/src/config/db";
+import fs from "fs";
 
 interface DocumentApiRequest extends NextApiRequest {
   body: {
-    data: string;
-    pelapor: {
+    sewaRuko: {
+      alamat: string;
+      nomor_hak_milik: string;
+      luas: string;
+      daya_listrik: string;
+      sumber_air: string;
+      biaya: {
+        harga_sewa: string;
+        jangka_waktu: string;
+        tanggal_mulai: string;
+        tanggal_berakhir: string;
+      };
+    };
+    pemilik: {
       nama: string;
       tempat_ttl: string;
       no_ktp: string;
       pekerjaan: string;
-      jenis_kelamin: string;
       alamat: string;
     };
-    terlapor: {
+    penyewa: {
       nama: string;
+      tempat_ttl: string;
+      no_ktp: string;
       pekerjaan: string;
-      no_telepon: string;
-      jenis_kelamin: string;
-      alamat: string;
-    };
-    instansi: {
-      nama: string;
       alamat: string;
     };
   };
@@ -33,102 +43,358 @@ interface DocumentApiRequest extends NextApiRequest {
   };
 }
 
-async function handler(req: DocumentApiRequest, res: NextApiResponse<any>) {
+export default async function handler(
+  req: DocumentApiRequest,
+  res: NextApiResponse<any>
+) {
   const doc = new PDFDocument();
-  doc.pipe(fs.createWriteStream("output.pdf"));
+  const pdfFileName = `${uuid()}-output.pdf`;
+  const pdfPath = `./tmp/${pdfFileName}`;
+  doc.pipe(fs.createWriteStream(pdfPath));
 
   if (req.method === "POST") {
-    const { data } = req.body;
-    const { pelapor, terlapor, instansi } = req.body;
     const { category } = req.query;
+    const { sewaRuko, pemilik, penyewa } = req.body;
 
     try {
-      doc.text("Hal: Laporan Tindah Pidana Penipuan Hutang Piutang");
-      doc.text("Lampiran: 1 (satu) berkas");
+      if (category === "sewa-ruko") {
+        createHeader(doc, "SURAT PERJANJIAN SEWA-MENYEWA RUKO");
 
-      doc.moveDown();
-      doc.text("Kepada Yth.");
-      doc.text(instansi.nama);
-      doc.text(`Di ${instansi.alamat}`);
+        doc.fontSize(12);
+        doc.font("Times-Roman");
 
-      doc.moveDown();
-      doc.text("Dengan hormat,");
-      doc.text(`Saya yang bertanda tangan di bawah ini:`);
-      doc.moveDown();
-      doc.text(`Nama`, { continued: true });
-      doc.text(`: ${pelapor.nama}`, {});
-      doc.text(`Tempat/Tanggal Lahir: ${pelapor.tempat_ttl}`);
-      doc.text(`No. KTP: ${pelapor.no_ktp}`);
-      doc.text(`Pekerjaan: ${pelapor.pekerjaan}`);
-      doc.text(`Jenis Kelamin: ${pelapor.jenis_kelamin}`);
-      doc.text(`Alamat: ${pelapor.alamat}`);
-
-      doc.moveDown();
-      doc.text(`Dengan ini melaporkan:`);
-      doc.text(`Nama: ${terlapor.nama}`);
-      doc.text(`Pekerjaan: ${terlapor.pekerjaan}`);
-      doc.text(`No. Telepon: ${terlapor.no_telepon}`);
-      doc.text(`Jenis Kelamin: ${terlapor.jenis_kelamin}`);
-      doc.text(`Alamat: ${terlapor.alamat}`);
-      doc.moveDown();
-
-      if (category === "laporan") {
-      }
-
-      if (category === "pengaduan") {
         doc.text(
-          `Bahwa saya telah melakukan pembayaran sebesar ${data} kepada saudara ${
-            terlapor.nama
-          } pada tanggal ${new Date().toLocaleDateString("id-ID", {
+          `Pada hari ini, ${new Date().toLocaleDateString("id-ID", {
             weekday: "long",
             year: "numeric",
             month: "long",
             day: "numeric",
-          })} melalui ${
-            pelapor.pekerjaan
-          } yang saya jalani. Namun, hingga saat ini saudara ${
-            terlapor.nama
-          } belum menyelesaikan hutang piutang tersebut. Saya telah mencoba menghubungi saudara ${
-            terlapor.nama
-          } melalui nomor telepon ${
-            terlapor.no_telepon
-          } namun tidak dapat dihubungi.`,
+          })}, kami yang bertanda tangan di bawah ini:`
+        );
+
+        doc.moveDown();
+
+        doc.list(
+          [
+            `Nama                           : ${penyewa.nama}`,
+            `Tempat/Tanggal Lahir : ${penyewa.tempat_ttl}`,
+            `Pekerjaan                     : ${penyewa.pekerjaan}`,
+            `Alamat                         : ${penyewa.alamat}`,
+            `Nomor KTP                 : ${penyewa.no_ktp}`,
+          ],
+          {
+            bulletRadius: 2,
+            textIndent: 10,
+            indent: 20,
+          }
+        );
+
+        doc.moveDown();
+
+        doc.text(
+          "Dalam hal ini bertindak atas nama diri pribadi yang selanjutnya disebut sebagai PIHAK PERTAMA (Pemilik)"
+        );
+
+        doc.moveDown();
+
+        let userId = null;
+
+        try {
+          const decoded = verifyToken(req.cookies.token as string);
+          userId = decoded.userId;
+        } catch (error) {
+          console.error("No data");
+        }
+
+        const users = await db.execute(
+          sql`SELECT * FROM public.user WHERE id = ${userId}`
+        );
+
+        if (userId) {
+          doc.list(
+            [
+              `Nama                           : ${users[0].fullname}`,
+              `Tempat/Tanggal Lahir : ${users[0].birth_date}`,
+              `Pekerjaan                     : ${users[0].job_title}`,
+              `Alamat                         : ${users[0].address}`,
+              `Nomor KTP                 : ${users[0].id_card_number}`,
+            ],
+            {
+              bulletRadius: 2,
+              textIndent: 10,
+              indent: 20,
+            }
+          );
+        } else {
+          if (!pemilik) {
+            return Response(res, 400, "Bad Request", {
+              type: "document - sewa-ruko",
+              error: "data should be filled",
+            });
+          }
+          doc.list(
+            [
+              `Nama                           : ${pemilik.nama}`,
+              `Tempat/Tanggal Lahir : ${pemilik.tempat_ttl}`,
+              `Pekerjaan                     : ${pemilik.pekerjaan}`,
+              `Alamat                         : ${pemilik.alamat}`,
+              `Nomor KTP                 : ${pemilik.no_ktp}`,
+            ],
+            {
+              bulletRadius: 2,
+              textIndent: 10,
+              indent: 20,
+            }
+          );
+        }
+
+        doc.moveDown();
+
+        doc.text(
+          "Dalam hal ini bertindak atas nama diri pribadi yang selanjutnya disebut sebagai PIHAK KEDUA (Penyewa)",
+          {
+            paragraphGap: 10,
+          }
+        );
+
+        doc.list(
+          [
+            "1. Bahwa PIHAK PERTAMA adalah pemilik yang sah atas sebuah tanah dan bangunan",
+          ],
+          {
+            bulletRadius: 0.01,
+            indent: 20,
+          }
+        );
+        doc.list(
+          ["dengan detail sebagai berikut (selanjutnya disebut sebagai RUKO)"],
+          {
+            bulletRadius: 0.01,
+            indent: 32,
+          }
+        );
+
+        doc.list(
+          [
+            `Alamat Ruko : ${sewaRuko.alamat}`,
+            `Nomor Sertifikat Hak Milik : ${sewaRuko.nomor_hak_milik}`,
+            `Luas: ${sewaRuko.luas}`,
+            `Daya Listrik : ${sewaRuko.daya_listrik}`,
+            `Sumber Air : ${sewaRuko.sumber_air}`,
+          ],
+          {
+            indent: 40,
+            bulletRadius: 2,
+          }
+        );
+
+        doc.list(
+          [
+            "2. Bahwa, PIHAK PERTAMA bermaksud untuk menyewakan Ruko tersebut kepada PIHAK",
+          ],
+          {
+            bulletRadius: 0.01,
+            indent: 20,
+          }
+        );
+
+        doc.list(
+          [
+            "KEDUA sebagaimana PIHAK KEDUA bermaksud untuk menyewa Ruko tersebut dari",
+          ],
+          {
+            bulletRadius: 0.01,
+            indent: 32,
+          }
+        );
+        doc.list(["PIHAK PERTAMA."], {
+          bulletRadius: 0.01,
+          indent: 32,
+        });
+
+        doc.moveDown();
+
+        doc.text(
+          `Selanjutnya, untuk maksud tersebut di atas, PARA PIHAK sepakat untuk mengikatkan diri dalam Perjanjian Ruko (selanjutnya disebut “Perjanjian”) ini dengan ketentuan dan syarat-syarat sebagaimana diatur pasal-pasal di bawah ini:`,
+          {
+            indent: 0,
+            align: "justify",
+            paragraphGap: 10,
+          }
+        );
+        doc.moveDown();
+
+        doc.fontSize(12);
+        doc.text("PASAL 1", {
+          align: "center",
+          paragraphGap: 10,
+        });
+        doc.text("KESEPAKATAN SEWA-MENYEWA", {
+          align: "center",
+          paragraphGap: 10,
+        });
+
+        // --------------------- ISI PASAL 1 ---------------------
+
+        doc.list(
+          [
+            "1. PIHAK PERTAMA dengan ini sepakat untuk menyewakan Ruko kepada PIHAK KEDUA",
+          ],
+          {
+            bulletRadius: 0.01,
+            indent: 20,
+          }
+        );
+        doc.list(
+          [
+            "sebagaimana PIHAK KEDUA dengan ini sepakat untuk menyewa Ruko tersebut dari",
+          ],
+          {
+            bulletRadius: 0.01,
+            indent: 32,
+          }
+        );
+        doc.list(["PIHAK PERTAMA."], {
+          bulletRadius: 0.01,
+          indent: 32,
+        });
+
+        doc.list(
+          [
+            "2. Sewa menyewa Ruko sebagaimana dimaksud ayat (1) dilaksanakan dengan ketentuan",
+          ],
+          {
+            bulletRadius: 0.01,
+            indent: 20,
+          }
+        );
+
+        doc.list(["sebagai berikut: "], {
+          bulletRadius: 0.01,
+          indent: 32,
+        });
+
+        doc.list(
+          [
+            `a. Harga sewa Ruko adalah sebesar Rp. ${sewaRuko.biaya.harga_sewa}`,
+          ],
+          {
+            bulletRadius: 0.01,
+            indent: 40,
+          }
+        );
+
+        doc.list(
+          [
+            `b. Jangka Waktu Sewa adalah untuk selama ${sewaRuko.biaya.jangka_waktu}`,
+          ],
+          {
+            bulletRadius: 0.01,
+            indent: 40,
+          }
+        );
+
+        doc.moveDown();
+
+        doc.fontSize(12);
+        doc.text("PASAL 2", {
+          align: "center",
+          paragraphGap: 10,
+        });
+        doc.text("HARGA DAN PEMBAYARAN", {
+          align: "center",
+          paragraphGap: 10,
+        });
+
+        // --------------------- ISI PASAL 2 ---------------------
+
+        // --------------------- End of doc ---------------------
+        doc.moveDown();
+        doc.moveDown();
+        doc.text("Demikianlah ", { continued: true });
+        doc.font("Times-Bold");
+        doc.text("Surat Perjanjian Sewa Ruko ", { continued: true });
+        doc.font("Times-Roman");
+        doc.text(
+          `ini dibuat dalam 2 (dua) rangkap yang bermaterai cukup dan mempunyai kekuatan hukum yang sama, ditandatangani kedua belah pihak pada ${new Date().toLocaleDateString(
+            "id-ID",
+            {
+              weekday: "long",
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            }
+          )}, dan berlaku sejak tanggal tersebut.`,
           {
             align: "justify",
           }
         );
+
+        doc.moveDown();
+        doc.font("Times-Bold");
+        doc.text("PIHAK PERTAMA", {
+          align: "left",
+          continued: true,
+        });
+
+        doc.text("PIHAK KEDUA", {
+          align: "right",
+        });
+
+        doc.moveDown();
+        doc.moveDown();
+        doc.moveDown();
+        doc.moveDown();
+
+        if (userId) {
+          doc.text(`(${users[0].fullname})`, {
+            align: "left",
+            continued: true,
+          });
+        } else {
+          doc.text(`(${pemilik.nama})`, {
+            align: "left",
+            continued: true,
+          });
+        }
+
+        doc.text(`(${penyewa.nama})`, {
+          align: "right",
+        });
       }
 
-      doc.text(
-        `Saudara ${
-          terlapor.nama
-        } telah melakukan tindak pidana penipuan hutang piutang terhadap saya. Saya telah melakukan pembayaran sebesar ${data} kepada saudara ${
-          terlapor.nama
-        } pada tanggal ${new Date().toLocaleDateString("id-ID", {
-          weekday: "long",
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-        })} melalui ${
-          pelapor.pekerjaan
-        } yang saya jalani. Namun, hingga saat ini saudara ${
-          terlapor.nama
-        } belum menyelesaikan hutang piutang tersebut.`,
-        {
-          align: "justify",
-        }
-      );
-
       doc.end();
-    } catch (error) {
-      console.log(error);
-      res.status(500).end();
-    }
 
-    res.status(200).json("Success");
+      await bucket.upload(pdfPath, {
+        destination: `pdf-documents/${pdfFileName}`,
+      });
+
+      fs.promises.unlink(pdfPath);
+
+      return Response(res, 200, "Success", {
+        type: "document - sewa-ruko",
+        payload: {
+          pdfUrl: `https://storage.googleapis.com/bebasss/pdf-documents/${pdfFileName}`,
+        },
+      });
+    } catch (error) {
+      return Response(res, 500, "Internal Server Error", {
+        type: "document - sewa-ruko",
+        error: error,
+      });
+    }
   } else {
-    res.status(405).end();
+    return Response(res, 405, "Method Not Allowed", {
+      type: "document - sewa-ruko",
+      error: "method not allowed",
+    });
   }
 }
 
-export default withAuth(handler);
+function createHeader(doc: typeof PDFDocument, title: string) {
+  doc.lineGap(1.5);
+  doc.fontSize(20);
+  doc.font("Times-Bold");
+  doc.text(title, { align: "center" });
+  doc.moveDown();
+}
