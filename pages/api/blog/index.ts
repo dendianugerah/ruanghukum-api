@@ -40,7 +40,7 @@ export default async function handler(
 
       const { title, content, flag } = req.body;
       const imageFileName = req.file.filename;
-      const imagePath = `./tmp/${imageFileName}`;
+      const imagePath = `/tmp/${imageFileName}`;
 
       try {
         await fs.promises.rename(req.file.path, imagePath);

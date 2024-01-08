@@ -49,7 +49,7 @@ export default async function handler(
 ) {
   const doc = new PDFDocument();
   const pdfFileName = `${uuid()}-output.pdf`;
-  const pdfPath = `./tmp/${pdfFileName}`;
+  const pdfPath = `/tmp/${pdfFileName}`;
   doc.pipe(fs.createWriteStream(pdfPath));
 
   if (req.method === "POST") {
