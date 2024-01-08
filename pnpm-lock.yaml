@@ -14,15 +14,9 @@ dependencies:
   bcrypt:
     specifier: ^5.1.1
     version: 5.1.1
-  dotenv:
-    specifier: ^16.3.1
-    version: 16.3.1
   drizzle-orm:
     specifier: ^0.29.2
     version: 0.29.2(@types/react@18.0.0)(expo-sqlite@13.2.0)(postgres@3.4.3)(react@18.0.0)
-  formidable:
-    specifier: ^3.5.1
-    version: 3.5.1
   jsonwebtoken:
     specifier: ^9.0.2
     version: 9.0.2
@@ -82,6 +76,9 @@ devDependencies:
   autoprefixer:
     specifier: ^10.0.1
     version: 10.0.1(postcss@8.0.0)
+  dotenv:
+    specifier: ^16.3.1
+    version: 16.3.1
   drizzle-kit:
     specifier: ^0.20.9
     version: 0.20.9
@@ -3948,13 +3945,6 @@ packages:
     engines: {node: '>=8'}
     dev: false
 
-  /dezalgo@1.0.4:
-    resolution: {integrity: sha512-rXSP0bf+5n0Qonsb+SVVfNfIsimO4HEtmnIpPHY8Q1UCzKlQrDMfdobr8nJOOsRgWCyMRqeSBQzmWUMq7zvVig==}
-    dependencies:
-      asap: 2.0.6
-      wrappy: 1.0.2
-    dev: false
-
   /dfa@1.2.0:
     resolution: {integrity: sha512-ED3jP8saaweFTjeGX8HQPjeC1YYyZs98jGNZx6IiBvxW7JG5v492kamAQB3m2wop07CvU/RQmzcKr6bgcC5D/Q==}
     dev: false
@@ -4006,7 +3996,7 @@ packages:
   /dotenv@16.3.1:
     resolution: {integrity: sha512-IPzF4w4/Rd94bA9imS68tZBaYyBWSCE47V1RGuMrB94iyTOIEwRmVL2x/4An+6mETpLrKJ5hQkB8W4kFAadeIQ==}
     engines: {node: '>=12'}
-    dev: false
+    dev: true
 
   /dreamopt@0.8.0:
     resolution: {integrity: sha512-vyJTp8+mC+G+5dfgsY+r3ckxlz+QMX40VjPQsZc5gxVAxLmi64TBoVkP54A/pRAXMXsbu2GMMBrZPxNv23waMg==}
@@ -5078,14 +5068,6 @@ packages:
       mime-types: 2.1.35
     dev: false
 
-  /formidable@3.5.1:
-    resolution: {integrity: sha512-WJWKelbRHN41m5dumb0/k8TeAx7Id/y3a+Z7QfhxP/htI9Js5zYaEDtG8uMgG0vM0lOlqnmjE99/kfpOYi/0Og==}
-    dependencies:
-      dezalgo: 1.0.4
-      hexoid: 1.0.0
-      once: 1.4.0
-    dev: false
-
   /freeport-async@2.0.0:
     resolution: {integrity: sha512-K7od3Uw45AJg00XUmy15+Hae2hOcgKcmN3/EF6Y7i01O0gaqiRx8sUSpsb9+BRNL8RPBrhzPsVfy8q9ADlJuWQ==}
     engines: {node: '>=8'}
@@ -5458,11 +5440,6 @@ packages:
   /heap@0.2.7:
     resolution: {integrity: sha512-2bsegYkkHO+h/9MGbn6KWcE45cHZgPANo5LXF7EvWdT0yT2EguSVO1nDgU5c8+ZOPwp2vMNa7YFsJhVcDR9Sdg==}
     dev: true
-
-  /hexoid@1.0.0:
-    resolution: {integrity: sha512-QFLV0taWQOZtvIRIAdBChesmogZrtuXvVWsFHZTk2SU+anspqZ2vMnoLg7IE1+Uk16N19APic1BuF8bC8c2m5g==}
-    engines: {node: '>=8'}
-    dev: false
 
   /hosted-git-info@3.0.8:
     resolution: {integrity: sha512-aXpmwoOhRBrw6X3j0h5RloK4x1OzsxMPyxqIHyNfSe2pypkVTZFpEiRoSipPEPlMrh0HW/XsjkJ5WgnCirpNUw==}
