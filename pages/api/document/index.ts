@@ -5,11 +5,12 @@ import { bucket } from "@/src/config/gcs";
 import { v4 as uuid } from "uuid";
 import PDFDocument from "pdfkit";
 import verifyToken from "@/src/helper/verifyToken";
-import db from "@/src/config/db";
+import db, { document } from "@/src/config/db";
 import fs from "fs";
 
 interface DocumentApiRequest extends NextApiRequest {
   body: {
+    title: string;
     sewaRuko: {
       alamat: string;
       nomor_hak_milik: string;
@@ -51,6 +52,24 @@ export default async function handler(
   const pdfFileName = `${uuid()}-output.pdf`;
   const pdfPath = `/tmp/${pdfFileName}`;
   doc.pipe(fs.createWriteStream(pdfPath));
+
+  let userId = null;
+
+  try {
+    const decoded = verifyToken(req.cookies.token as string);
+    userId = decoded.userId;
+  } catch (error) {
+    console.error("No data");
+  }
+
+  if (userId) {
+    await db.insert(document).values({
+      id: uuid(),
+      userId: userId as string,
+      name: req.body.title,
+      path: `https://storage.googleapis.com/bebasss/pdf-documents/${pdfFileName}`,
+    });
+  }
 
   if (req.method === "POST") {
     const { category } = req.query;
@@ -96,15 +115,6 @@ export default async function handler(
         );
 
         doc.moveDown();
-
-        let userId = null;
-
-        try {
-          const decoded = verifyToken(req.cookies.token as string);
-          userId = decoded.userId;
-        } catch (error) {
-          console.error("No data");
-        }
 
         const users = await db.execute(
           sql`SELECT * FROM public.user WHERE id = ${userId}`
@@ -374,7 +384,8 @@ export default async function handler(
       return Response(res, 200, "Success", {
         type: "document - sewa-ruko",
         payload: {
-          pdfUrl: `https://storage.googleapis.com/bebasss/pdf-documents/${pdfFileName}`,
+          title: req.body.title,
+          path: `https://storage.googleapis.com/bebasss/pdf-documents/${pdfFileName}`,
         },
       });
     } catch (error) {
@@ -383,6 +394,22 @@ export default async function handler(
         error: error,
       });
     }
+  } else if (req.method === "GET") {
+    const data = await db.execute(
+      sql`SELECT * FROM public.document WHERE user_id = ${userId}`
+    );
+
+    if (!data.length) {
+      return Response(res, 404, "Not Found", {
+        type: "document - sewa-ruko",
+        error: "data not found",
+      });
+    }
+
+    return Response(res, 200, "Success", {
+      type: "document - sewa-ruko",
+      payload: data,
+    });
   } else {
     return Response(res, 405, "Method Not Allowed", {
       type: "document - sewa-ruko",
