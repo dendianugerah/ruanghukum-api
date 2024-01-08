@@ -90,3 +90,11 @@ export const blog = pgTable("blog", {
   flag: varchar("flag", { length: 255 }),
   ...timestampColumns(),
 });
+
+export const document = pgTable("document", {
+  id: uuid("id").primaryKey(),
+  userId: uuid("user_id").references(() => user.id),
+  name: varchar("name", { length: 255 }),
+  path: varchar("path", { length: 255 }),
+  ...timestampColumns(),
+});
