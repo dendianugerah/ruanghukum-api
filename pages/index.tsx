@@ -47,10 +47,65 @@ export default function Home({ blogs }: HomeProps) {
             />
           </div>
 
-          <h1 className="text-2xl">Berita terbaru</h1>
-          <Blog blogs={blogs} />
+          <h1 className="text-2xl py-4 px-4">Layanan Kami</h1>
+          <div className="grid grid-cols-3 gap-4 mb-4 text-justify">
+            <div className=" p-4">
+              <h1 className="text-xl font-bold">
+                Bingung dengan Kasus yang Dihadapi?
+              </h1>
+              <div className=" mx-auto flex mt-2">
+                <p className="text-sm text-gray-600 mx-1">
+                  Dapatkan konsultasi hukum dari para ahli berpengalaman untuk
+                  solusi yang lebih efektif dan cepat.
+                </p>
+                <Image
+                  src="/assets/konsultasi-hukum.png"
+                  width={200}
+                  height={100}
+                  alt="konsultasi"
+                  className="shadow-2xl rounded-xl mx-4"
+                />
+              </div>
+            </div>
+            <div className=" p-4">
+              <h1 className="text-xl font-bold">Atau Ingin Melaporkan?</h1>
+              <div className="mx-auto flex mt-2">
+                <p className="text-sm text-gray-600 mx-1">
+                  Memerlukan bantuan untuk melaporkan kasus yang terjadi? Kami
+                  tentu saja akan memberikan bantuan untuk melaporkan kasus yang
+                  terjadi.
+                </p>
+                <Image
+                  src="/assets/dokumen-hukum.png"
+                  width={200}
+                  height={100}
+                  alt="dokumen"
+                  className="shadow-2xl rounded-xl mx-4"
+                />
+              </div>
+            </div>
+            <div className=" p-4">
+              <h1 className="text-xl font-bold">RuangHukum Hadir untuk Itu</h1>
+              <div className=" mx-auto flex mt-2">
+                <p className="text-sm text-gray-600 mx-1">
+                  Dapatkan konsultasi hukum kapan saja, 24 jam sehari, 7 hari
+                  seminggu, dengan bantuan dari sistem Kecerdasan Buatan yang
+                  siap memberi nasihat hukum yang akurat dan relevan terhadap
+                  hukum yang berlaku di Indonesia.
+                </p>
+                <Image
+                  src="/assets/nasihat-hukum.png"
+                  width={200}
+                  height={100}
+                  alt="nasihat"
+                  className="shadow-2xl rounded-xl mx-4"
+                />
+              </div>
+            </div>
+          </div>
 
-          <h1 className="text-2xl">Layanan Kami</h1>
+          <h1 className="text-2xl px-4 py-4">Berita terbaru</h1>
+          <Blog blogs={blogs} />
         </div>
       </RootLayout>
     </main>
