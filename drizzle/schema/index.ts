@@ -40,6 +40,7 @@ export const user = pgTable("user", {
   email: varchar("email", { length: 255 }),
   password: varchar("password", { length: 255 }),
   address: varchar("address", { length: 255 }),
+  profilePicture: varchar("profile_picture", { length: 255 }),
   phoneNumber: varchar("phone_number", { length: 100 }),
   gender: genderEnum("gender"),
   jobTitle: varchar("job_title", { length: 255 }),
