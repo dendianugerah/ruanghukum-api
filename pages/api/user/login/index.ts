@@ -25,7 +25,7 @@ export default async function handler(
 
       const [userRecord] = await db
         .execute(
-          sql`SELECT id, email, password FROM ${user} WHERE email = ${email}`
+          sql`SELECT id, email, fullname, address, phone_number, gender, job_title, id_card_number, birth_date, profile_picture, password FROM ${user} WHERE email = ${email}`
         )
         .catch((error) => {
           throw error;
@@ -49,8 +49,17 @@ export default async function handler(
 
       return Response(res, 200, "Login success", {
         type: "user - login",
+        token: token,
         payload: {
+          fullname: userRecord.fullname,
           email: email,
+          address: userRecord.address,
+          phone_number: userRecord.phone_number,
+          gender: userRecord.gender,
+          job_title: userRecord.job_title,
+          id_card_number: userRecord.id_card_number,
+          birth_date: userRecord.birth_date,
+          profile_picture: userRecord.profile_picture,
         },
       });
     } catch (error) {

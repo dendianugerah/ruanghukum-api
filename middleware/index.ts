@@ -3,7 +3,7 @@ import verifyToken from "@/src/helper/verifyToken";
 
 export default function withAuth(handler: any) {
   return async (req: NextApiRequest, res: NextApiResponse) => {
-    const token = req.cookies.token;
+    const token = (req.headers.authorization || "").split("Bearer ").at(1);
 
     if (!token) {
       return res.status(401).json({ message: "Unauthorized" });
