@@ -45,7 +45,6 @@ export default async function handler(
       }
 
       const token = generateJwt(userRecord.id as string, email);
-      res.setHeader("Set-Cookie", `token=${token}; path=/; HttpOnly`);
 
       return Response(res, 200, "Login success", {
         type: "user - login",

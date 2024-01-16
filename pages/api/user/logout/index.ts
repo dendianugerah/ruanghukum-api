@@ -6,7 +6,6 @@ export default function handler(
   res: NextApiResponse<any>
 ) {
   if (req.method === "GET") {
-    res.setHeader("Set-Cookie", `token=; path=/; HttpOnly`);
     return Response(res, 200, "Logout success", {
       type: "user - logout",
     });

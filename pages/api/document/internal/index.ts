@@ -7,8 +7,9 @@ import PDFDocument from "pdfkit";
 import verifyToken from "@/src/helper/verifyToken";
 import db, { document } from "@/src/config/db";
 import fs from "fs";
+import withAuth from "@/middleware";
 
-interface DocumentApiRequest extends NextApiRequest {
+interface DocumentApiInternalRequest extends NextApiRequest {
   body: {
     title: string;
     sewaRuko: {
@@ -24,13 +25,6 @@ interface DocumentApiRequest extends NextApiRequest {
         tanggal_berakhir: string;
       };
     };
-    pemilik: {
-      nama: string;
-      tempat_ttl: string;
-      no_ktp: string;
-      pekerjaan: string;
-      alamat: string;
-    };
     penyewa: {
       nama: string;
       tempat_ttl: string;
@@ -44,18 +38,24 @@ interface DocumentApiRequest extends NextApiRequest {
   };
 }
 
-export default async function handler(
-  req: DocumentApiRequest,
-  res: NextApiResponse<any>
-) {
+async function handler(req: DocumentApiInternalRequest, res: NextApiResponse) {
   const doc = new PDFDocument();
   const pdfFileName = `${uuid()}-output.pdf`;
   const pdfPath = `/tmp/${pdfFileName}`;
   doc.pipe(fs.createWriteStream(pdfPath));
 
+  let userId = req.userId;
+
+  await db.insert(document).values({
+    id: uuid(),
+    userId: userId as string,
+    name: req.body.title,
+    path: `https://storage.googleapis.com/bebasss/pdf-documents/${pdfFileName}`,
+  });
+
   if (req.method === "POST") {
     const { category } = req.query;
-    const { sewaRuko, pemilik, penyewa } = req.body;
+    const { sewaRuko, penyewa } = req.body;
 
     try {
       if (category === "sewa-ruko") {
@@ -98,13 +98,17 @@ export default async function handler(
 
         doc.moveDown();
 
+        const users = await db.execute(
+          sql`SELECT * FROM public.user WHERE id = ${req.userId}`
+        );
+
         doc.list(
           [
-            `Nama                           : ${pemilik.nama}`,
-            `Tempat/Tanggal Lahir : ${pemilik.tempat_ttl}`,
-            `Pekerjaan                     : ${pemilik.pekerjaan}`,
-            `Alamat                         : ${pemilik.alamat}`,
-            `Nomor KTP                 : ${pemilik.no_ktp}`,
+            `Nama                           : ${users[0].fullname}`,
+            `Tempat/Tanggal Lahir : ${users[0].birth_date}`,
+            `Pekerjaan                     : ${users[0].job_title}`,
+            `Alamat                         : ${users[0].address}`,
+            `Nomor KTP                 : ${users[0].id_card_number}`,
           ],
           {
             bulletRadius: 2,
@@ -311,7 +315,7 @@ export default async function handler(
         doc.moveDown();
         doc.moveDown();
 
-        doc.text(`(${pemilik.nama})`, {
+        doc.text(`(${users[0].fullname})`, {
           align: "left",
           continued: true,
         });
@@ -342,6 +346,22 @@ export default async function handler(
         error: error,
       });
     }
+  } else if (req.method === "GET") {
+    const data = await db.execute(
+      sql`SELECT * FROM public.document WHERE user_id = ${req.userId} ORDER BY created_at DESC`
+    );
+
+    if (!data.length) {
+      return Response(res, 404, "Not Found", {
+        type: "document - sewa-ruko",
+        error: "data not found",
+      });
+    }
+
+    return Response(res, 200, "Success", {
+      type: "document - sewa-ruko",
+      payload: data,
+    });
   } else {
     return Response(res, 405, "Method Not Allowed", {
       type: "document - sewa-ruko",
@@ -357,3 +377,5 @@ function createHeader(doc: typeof PDFDocument, title: string) {
   doc.text(title, { align: "center" });
   doc.moveDown();
 }
+
+export default withAuth(handler);
