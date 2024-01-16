@@ -50,6 +50,7 @@ export default async function handler(
         type: "user - login",
         token: token,
         payload: {
+          id: userRecord.id,
           fullname: userRecord.fullname,
           email: email,
           address: userRecord.address,

@@ -109,11 +109,13 @@ async function handler(req: ProfileApiRequest, res: NextApiResponse<any>) {
 
         await db.execute(final);
         return Response(res, 200, "Success", {
-          type: "user - update",
-          payload: {
-            fullname: fullname,
-            email: req.email,
-          },
+          data: {
+            type: "user - update",
+            payload: {
+              fullname: fullname,
+              email: req.email,
+            },
+          }
         });
       });
     } catch (error) {

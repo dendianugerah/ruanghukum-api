@@ -4,7 +4,6 @@ import { Response } from "@/src/helper/apiResponse";
 import { bucket } from "@/src/config/gcs";
 import { v4 as uuid } from "uuid";
 import PDFDocument from "pdfkit";
-import verifyToken from "@/src/helper/verifyToken";
 import db, { document } from "@/src/config/db";
 import fs from "fs";
 import withAuth from "@/middleware";
